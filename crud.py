@@ -2,12 +2,13 @@ import pymongo
 from pymongo import MongoClient
 from urllib.parse import quote_plus
 import os
+import tkinter as tk
+from tkinter import messagebox
 
+# Conexão com MongoDB
 username = "santiagoguii"
 password = quote_plus("gp131204")
-
 url = f"mongodb+srv://{username}:{password}@santiagoad.yxldq.mongodb.net/?retryWrites=true&w=majority&appName=SantiagoAD"
-
 client = MongoClient(url)
 db = client['agenda']  
 collection = db['contatos']
@@ -16,143 +17,189 @@ collection = db['contatos']
 usuario = "user"
 senha = "user123"
 
-# Função para efetuar login
+# Função de login
 def login():
-    print("\n----------LOGIN----------")
-    username = input("Usuário: ")
-    password = input("Senha: ")
+    username_input = username_entry.get()
+    password_input = password_entry.get()
 
-    if username == usuario and password == senha:
-        os.system('cls' if os.name == 'nt' else 'clear')
-        print(">>>>Login bem-sucedido!\n")
-        main()
+    if username_input == usuario and password_input == senha:
+        messagebox.showinfo("Login", "Login bem-sucedido!")
+        login_frame.pack_forget()
+        main_menu()
     else:
-        os.system('cls' if os.name == 'nt' else 'clear')
-        print("\n>>>>Usuário ou senha incorretos.")
-        login()
+        messagebox.showerror("Erro", "Usuário ou senha incorretos.")
 
 # Função para cadastrar contato
 def registrar_contato():
-    print("\n----------CADASTRO DE CONTATO----------")
-    try:
-        nome = input("Nome completo: ")
-        telefone = input("Telefone: ")
+    nome = nome_entry.get()
+    telefone = telefone_entry.get()
 
-        collection.insert_one({
-            "nome": nome,
-            "telefone": telefone,
-        })
-        os.system('cls' if os.name == 'nt' else 'clear')
-        print("Contato cadastrado com sucesso!\n")
-    except Exception as e:
-        os.system('cls' if os.name == 'nt' else 'clear')
-        print("Erro ao cadastrar contato:", e)
+    if nome and telefone:
+        collection.insert_one({"nome": nome, "telefone": telefone})
+        messagebox.showinfo("Sucesso", "Contato cadastrado com sucesso!")
+    else:
+        messagebox.showerror("Erro", "Preencha todos os campos.")
 
 # Função para consultar contato
 def consultar_contato():
-    print("\n----------CONSULTAR CONTATO----------")
-    nome = input("Digite o nome do contato: ")
+    nome = nome_entry.get()
 
-    try:
+    if nome:
         resultado = collection.find_one({"nome": nome})
         if resultado:
-            print("\n>>>>Dados do contato:")
-            print(f"Nome: {resultado['nome']}")
-            print(f"Telefone: {resultado['telefone']}\n")
+            result_label.config(text=f"Nome: {resultado['nome']}\nTelefone: {resultado['telefone']}")
         else:
-            os.system('cls' if os.name == 'nt' else 'clear')
-            print("Contato não localizado")
-    except Exception as e:
-        os.system('cls' if os.name == 'nt' else 'clear')
-        print("Erro ao consultar contato:", e)
-
-# Função para consultar todos os contatos
-def consultar_todos_contatos():
-    print("\n----------CONSULTAR TODOS OS CONTATOS----------")
-    try:
-        contatos = list(collection.find())  # Converte o cursor em uma lista
-        if contatos:
-            for contato in contatos:
-                print(f"Nome: {contato['nome']}, Telefone: {contato['telefone']}")
-            print("\n")
-        else:
-            os.system('cls' if os.name == 'nt' else 'clear')
-            print("Nenhum contato cadastrado.")
-    except Exception as e:
-        os.system('cls' if os.name == 'nt' else 'clear')
-        print("Erro ao consultar contatos:", e)
+            messagebox.showwarning("Não encontrado", "Contato não localizado.")
+    else:
+        messagebox.showerror("Erro", "Digite um nome para consultar.")
 
 # Função para atualizar contato
 def atualizar_contato():
-    print("\n----------ATUALIZAR CONTATO----------")
-    nome = input("Digite o nome do contato: ")
+    nome = nome_entry.get()
+    novo_telefone = telefone_entry.get()
 
-    try:
+    if nome and novo_telefone:
         resultado = collection.find_one({"nome": nome})
         if resultado:
-            novo_telefone = input("[Atualizando] Novo telefone: ")
-
-            collection.update_one({"nome": nome}, {
-                "$set": {
-                    "telefone": novo_telefone,
-                }
-            })
-            os.system('cls' if os.name == 'nt' else 'clear')
-            print("Contato atualizado com sucesso!\n")
+            collection.update_one({"nome": nome}, {"$set": {"telefone": novo_telefone}})
+            messagebox.showinfo("Sucesso", "Contato atualizado com sucesso!")
         else:
-            os.system('cls' if os.name == 'nt' else 'clear')
-            print("\n>>>>Contato não encontrado.\n")
-    except Exception as e:
-        os.system('cls' if os.name == 'nt' else 'clear')
-        print("Erro ao atualizar contato:", e)
+            messagebox.showwarning("Não encontrado", "Contato não localizado.")
+    else:
+        messagebox.showerror("Erro", "Preencha todos os campos.")
 
 # Função para deletar contato
 def deletar_contato():
-    print("\n----------DELETAR CONTATO----------")
-    nome = input("Informe o nome do contato: ")
+    nome = nome_entry.get()
 
-    try:
+    if nome:
         resultado = collection.find_one({"nome": nome})
-
         if resultado:
             collection.delete_one({"nome": nome})
-            os.system('cls' if os.name == 'nt' else 'clear')
-            print("Contato deletado com sucesso!\n")
+            messagebox.showinfo("Sucesso", "Contato deletado com sucesso!")
         else:
-            os.system('cls' if os.name == 'nt' else 'clear')
-            print("\n>>>>Contato não encontrado.\n")
-    except Exception as e:
-        os.system('cls' if os.name == 'nt' else 'clear')
-        print("Não foi possível deletar o contato:", e)
+            messagebox.showwarning("Não encontrado", "Contato não localizado.")
+    else:
+        messagebox.showerror("Erro", "Digite um nome para deletar.")
 
-# Menu interativo com opções CRUD
-def main():
-    opcao = 0
-    while opcao != 9:
-        print("----------CONTATOS----------")
-        print("\n[1] Cadastrar Contato\n[2] Consultar Contato\n[3] Consultar Todos os Contatos\n[4] Atualizar Contato\n[5] Deletar Contato\n[9] Sair")
-        opcao = int(input("Escolha uma opção: "))
-        if opcao == 1:
-            os.system('cls' if os.name == 'nt' else 'clear')
-            registrar_contato()
-        elif opcao == 2:
-            os.system('cls' if os.name == 'nt' else 'clear')
-            consultar_contato()
-        elif opcao == 3:
-            os.system('cls' if os.name == 'nt' else 'clear')
-            consultar_todos_contatos()
-        elif opcao == 4:
-            os.system('cls' if os.name == 'nt' else 'clear')
-            atualizar_contato()
-        elif opcao == 5:
-            os.system('cls' if os.name == 'nt' else 'clear')
-            deletar_contato()
-        elif opcao == 9:
-            os.system('cls' if os.name == 'nt' else 'clear')
-            break
-        else:
-            os.system('cls' if os.name == 'nt' else 'clear')
-            print("Opção inválida. Por favor, escolha uma opção válida.\n")
+# Função para consultar todos os contatos
+def consultar_todos_contatos():
+    clear_window()
+    tk.Label(window, text="Todos os Contatos", bg=bg_color, font=("Helvetica", 14)).pack()
 
-# Chamada para função de login
-login()
+    contatos = list(collection.find())
+    if contatos:
+        for contato in contatos:
+            tk.Label(window, text=f"Nome: {contato['nome']} - Telefone: {contato['telefone']}", bg=bg_color, fg="white").pack()
+    else:
+        tk.Label(window, text="Nenhum contato cadastrado.", bg=bg_color, fg="white").pack()
+
+    tk.Button(window, text="Voltar", command=main_menu, bg=button_color, fg="white").pack(pady=10)
+
+# Menu principal
+def main_menu():
+    clear_window()
+
+    tk.Label(window, text="Menu Principal", bg=bg_color, font=("Helvetica", 16), fg="white").pack(pady=10)
+    tk.Button(window, text="Cadastrar Contato", command=show_register, bg=button_color, fg="white").pack(pady=5)
+    tk.Button(window, text="Consultar Contato", command=show_consult, bg=button_color, fg="white").pack(pady=5)
+    tk.Button(window, text="Consultar Todos os Contatos", command=consultar_todos_contatos, bg=button_color, fg="white").pack(pady=5)
+    tk.Button(window, text="Atualizar Contato", command=show_update, bg=button_color, fg="white").pack(pady=5)
+    tk.Button(window, text="Deletar Contato", command=show_delete, bg=button_color, fg="white").pack(pady=5)
+    tk.Button(window, text="Sair", command=window.quit, bg=button_color, fg="white").pack(pady=5)
+
+# Função para limpar a tela
+def clear_window():
+    for widget in window.winfo_children():
+        widget.destroy()
+
+# Telas específicas para ações
+def show_register():
+    clear_window()
+    tk.Label(window, text="Cadastrar Contato", bg=bg_color, font=("Helvetica", 14), fg="white").pack()
+
+    tk.Label(window, text="Nome:", bg=bg_color, fg="white").pack()
+    global nome_entry
+    nome_entry = tk.Entry(window)
+    nome_entry.pack()
+
+    tk.Label(window, text="Telefone:", bg=bg_color, fg="white").pack()
+    global telefone_entry
+    telefone_entry = tk.Entry(window)
+    telefone_entry.pack()
+
+    tk.Button(window, text="Salvar", command=registrar_contato, bg=button_color, fg="white").pack(pady=10)
+    tk.Button(window, text="Voltar", command=main_menu, bg=button_color, fg="white").pack(pady=5)
+
+def show_consult():
+    clear_window()
+    tk.Label(window, text="Consultar Contato", bg=bg_color, font=("Helvetica", 14), fg="white").pack()
+
+    tk.Label(window, text="Nome:", bg=bg_color, fg="white").pack()
+    global nome_entry
+    nome_entry = tk.Entry(window)
+    nome_entry.pack()
+
+    global result_label
+    result_label = tk.Label(window, text="", bg=bg_color, fg="white")
+    result_label.pack()
+
+    tk.Button(window, text="Consultar", command=consultar_contato, bg=button_color, fg="white").pack(pady=10)
+    tk.Button(window, text="Voltar", command=main_menu, bg=button_color, fg="white").pack(pady=5)
+
+def show_update():
+    clear_window()
+    tk.Label(window, text="Atualizar Contato", bg=bg_color, font=("Helvetica", 14), fg="white").pack()
+
+    tk.Label(window, text="Nome:", bg=bg_color, fg="white").pack()
+    global nome_entry
+    nome_entry = tk.Entry(window)
+    nome_entry.pack()
+
+    tk.Label(window, text="Novo Telefone:", bg=bg_color, fg="white").pack()
+    global telefone_entry
+    telefone_entry = tk.Entry(window)
+    telefone_entry.pack()
+
+    tk.Button(window, text="Atualizar", command=atualizar_contato, bg=button_color, fg="white").pack(pady=10)
+    tk.Button(window, text="Voltar", command=main_menu, bg=button_color, fg="white").pack(pady=5)
+
+def show_delete():
+    clear_window()
+    tk.Label(window, text="Deletar Contato", bg=bg_color, font=("Helvetica", 14), fg="white").pack()
+
+    tk.Label(window, text="Nome:", bg=bg_color, fg="white").pack()
+    global nome_entry
+    nome_entry = tk.Entry(window)
+    nome_entry.pack()
+
+    tk.Button(window, text="Deletar", command=deletar_contato, bg=button_color, fg="white").pack(pady=10)
+    tk.Button(window, text="Voltar", command=main_menu, bg=button_color, fg="white").pack(pady=5)
+
+#Ajustes de interface
+# Configuração da interface de login
+window = tk.Tk()
+window.title("Sistema de Contatos")
+
+# Tamanho da janela
+window.geometry("500x500")
+
+# Cores e fonte padrão
+bg_color = "#4B0082"  
+button_color = "#8A2BE2"  
+window.config(bg=bg_color)
+
+login_frame = tk.Frame(window, bg=bg_color)
+login_frame.pack(pady=20)
+
+tk.Label(login_frame, text="Usuário:", bg=bg_color, fg="white").pack()
+username_entry = tk.Entry(login_frame)
+username_entry.pack()
+
+tk.Label(login_frame, text="Senha:", bg=bg_color, fg="white").pack()
+password_entry = tk.Entry(login_frame, show="*")
+password_entry.pack()
+
+tk.Button(login_frame, text="Login", command=login, bg=button_color, fg="white").pack(pady=10)
+
+window.mainloop()
